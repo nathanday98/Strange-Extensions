@@ -1,11 +1,87 @@
 #include <windows.h>
 #include <Wininet.h>
+#include <stdio.h>
+#include <stdint.h>
 
-int CALLBACK 
-WinMain(HINSTANCE Instance,
-        HINSTANCE PrevInstance,
-        LPSTR CommandLine,
-        int ShowCode)
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+static void *
+GeneralAlloc(u64 Size)
+{
+    return VirtualAlloc(0, Size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+}
+
+static void
+GeneralFree(void *Memory)
+{
+    VirtualFree(Memory, 0, MEM_RELEASE);
+}
+
+#include "strangeextensions_parse.cpp"
+
+
+struct file_data
+{
+    char *Contents;
+    uint32_t ContentSize;
+};
+
+static file_data
+Win32ReadEntireFile(char *Filename)
+{
+    file_data Result = {0};
+
+    HANDLE FileHandle = CreateFileA(Filename, 
+                                    GENERIC_READ, 
+                                    FILE_SHARE_READ, 
+                                    0, 
+                                    OPEN_EXISTING, 
+                                    0, 
+                                    0);
+
+    if(FileHandle != INVALID_HANDLE_VALUE)
+    {
+        LARGE_INTEGER FileSize;
+        if(GetFileSizeEx(FileHandle,
+                         &FileSize))
+        {
+            u32 FileSize32 = (u32)FileSize.QuadPart;
+            Result.Contents = (char *)GeneralAlloc((u64)FileSize32);
+            if(Result.Contents)
+            {
+                DWORD BytesRead;
+                if(ReadFile(FileHandle, 
+                            Result.Contents,
+                            FileSize32,
+                            &BytesRead,
+                            0)
+                    && (FileSize32 == BytesRead))
+                {
+                    Result.ContentSize = FileSize32;
+                }
+                else
+                {
+                    GeneralFree(Result.Contents);
+                    Result.Contents = 0;
+                }
+            }
+        }
+    }
+    else
+    {
+        // TODO(nathan): error invalid filename
+    }
+
+    CloseHandle(FileHandle);
+
+    return(Result);
+};
+int 
+main(int ArgCount,
+     char *Args[])
 {    
     HINTERNET InternetHandle = 
         InternetOpen("www.opengl.org",
@@ -66,6 +142,21 @@ WinMain(HINSTANCE Instance,
     {
         // TODO(zak): Logging
     }
-                
+
+    if(ArgCount > 1)
+    {
+        for(int File = 1; 
+            File < ArgCount; 
+            File++)
+        {
+            file_data SourceFile = Win32ReadEntireFile(Args[File]);
+            ParseText(SourceFile.Contents, SourceFile.ContentSize);
+        }
+    }
+    else
+    {
+        printf("No files specified\n");
+    }
+
     return(0);
 }
