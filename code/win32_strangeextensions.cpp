@@ -150,7 +150,18 @@ main(int ArgCount,
             File++)
         {
             file_data SourceFile = Win32ReadEntireFile(Args[File]);
+
+            LARGE_INTEGER StartClock;
+            QueryPerformanceCounter(&StartClock);
+
             ParseText(SourceFile.Contents, SourceFile.ContentSize);
+
+            LARGE_INTEGER EndClock;
+            QueryPerformanceCounter(&EndClock);
+
+            u64 Time = EndClock.QuadPart - StartClock.QuadPart;
+            printf("Took %lld\n", Time);
+
         }
     }
     else
