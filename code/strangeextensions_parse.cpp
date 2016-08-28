@@ -105,22 +105,33 @@ ParseText(char *Input,
             }
         }
 
-        // if(*C == 'g' 
-        //     && *(C+1) == 'l')
-        // {
-        //     char *End = C;
-        //     while(!IsEndOfFuncionCall(End++))
-        //     {
+        if(*C == 'g' 
+            && *(C+1) == 'l')
+        {
+            char *End = C;
+            while(!IsEndOfFuncionCall(End++))
+            {
 
-        //     }
-        //     u32 Len = (u32)(End - C)-1;
-        //     if(IsInCoreARB(C, Len, CoreARBFile))
-        //     {
-        //         printf("%.*s\n", 
-        //                 Len, 
-        //                 C);
-        //         // NOTE(nathan): write to file
-        //     }
-        // }
+            }
+            u32 Len = (u32)(End - C)-1;
+            char *Location = IsInCoreARB(C, Len, CoreARBFile);
+            if(Location)
+            {
+                char *LocationWalker = Location + Len;
+                while(*LocationWalker == ' ')
+                {
+                    LocationWalker++;
+                }
+
+                char *ValueWalker = LocationWalker;
+                while(!IsEndOfLine(ValueWalker))
+                {
+                    ValueWalker++;
+                }
+
+                u32 ValueLen = (u32)(ValueWalker - LocationWalker);
+                printf("%.*s %.*s\n", Len, Location, ValueLen, LocationWalker);
+            }
+        }
     }
 }
