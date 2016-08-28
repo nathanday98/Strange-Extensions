@@ -20,14 +20,13 @@ GeneralFree(void *Memory)
     VirtualFree(Memory, 0, MEM_RELEASE);
 }
 
-#include "strangeextensions_parse.cpp"
-
-
 struct file_data
 {
     char *Contents;
     uint32_t ContentSize;
 };
+
+#include "strangeextensions_parse.cpp"
 
 static file_data
 Win32ReadEntireFile(char *Filename)
@@ -143,6 +142,8 @@ main(int ArgCount,
         // TODO(zak): Logging
     }
 
+    file_data CoreARBFile = Win32ReadEntireFile("corearb.h");
+
     if(ArgCount > 1)
     {
         for(int File = 1; 
@@ -154,7 +155,8 @@ main(int ArgCount,
             LARGE_INTEGER StartClock;
             QueryPerformanceCounter(&StartClock);
 
-            ParseText(SourceFile.Contents, SourceFile.ContentSize);
+            ParseText(SourceFile.Contents, 
+                      SourceFile.ContentSize, &CoreARBFile);
 
             LARGE_INTEGER EndClock;
             QueryPerformanceCounter(&EndClock);
