@@ -59,6 +59,24 @@ IsInCoreARB(char *Function,
     return 0;
 }
 
+static bool
+HasBeenParsed(u64 Function,
+              u64 *CheckBuffer,
+              u32 CheckBufferSize)
+{
+    for(u32 Index = 0;
+        Index < CheckBufferSize;
+        Index++)
+    {
+        u64 ToCheck = *(CheckBuffer + Index);
+        if(Function == ToCheck)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 /* 
     NOTE(nathan): passing text instead of file data because we could add
                   reading multiple code blocks asynchronously if needed
@@ -70,6 +88,7 @@ ParseText(char *Input,
           file_data *CoreARBFile)
 {   
     char *C = Input;
+    u32 CheckBufferSize = 0;
     while(*(C++))
     {
         if(*C == 'G' 
@@ -92,6 +111,7 @@ ParseText(char *Input,
                 char *LocationWalker = Location + Len;
                 while(*LocationWalker == ' ')
                 {
+
                     LocationWalker++;
                 }
 
@@ -101,9 +121,15 @@ ParseText(char *Input,
                     ValueWalker++;
                 }
                 u32 ValueLen = (u32)(ValueWalker - LocationWalker);
-                printf("%.*s %.*s\n", Len, Location, ValueLen, LocationWalker);
+                if(!HasBeenParsed((u64)Location, (u64 *)Input, ++CheckBufferSize))
+                {
+                    printf("%.*s %.*s\n", Len, Location, ValueLen, LocationWalker);
+                    *((u64 *)Input + CheckBufferSize-1) = (u64)Location;
+                }
             }
         }
+
+        // memset(Input, 0, CheckBufferSize * sizeof(u64));
 
         if(*C == 'g' 
             && *(C+1) == 'l')
@@ -129,9 +155,30 @@ ParseText(char *Input,
                     ValueWalker++;
                 }
 
+                char *ReturnTypeWalker = Location - 10;
+                u32 ReturnTypeLen = 0;
+                while(!StringCompare(ReturnTypeWalker - 5, "GLAPI", 5))
+                {
+                    ReturnTypeLen++;
+                    ReturnTypeWalker--;
+                }
+                ReturnTypeWalker++;
+                ReturnTypeLen--;
+
+
                 u32 ValueLen = (u32)(ValueWalker - LocationWalker);
-                printf("%.*s %.*s\n", Len, Location, ValueLen, LocationWalker);
+                if(!HasBeenParsed((u64)Location, (u64 *)Input, ++CheckBufferSize))
+                {
+                    printf("%.*s %.*s\n", ReturnTypeLen, ReturnTypeWalker, Len, Location);
+                    *((u64 *)Input + CheckBufferSize-1) = (u64)Location;                    
+                }
             }
         }
+
+        if(CheckBufferSize * 4 > C - Input)
+        {
+            printf("Check buffer is overflowing\n");
+        }
+
     }
 }

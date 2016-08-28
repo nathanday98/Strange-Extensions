@@ -156,7 +156,8 @@ main(int ArgCount,
             QueryPerformanceCounter(&StartClock);
 
             ParseText(SourceFile.Contents, 
-                      SourceFile.ContentSize, &CoreARBFile);
+                      SourceFile.ContentSize, 
+                      &CoreARBFile);
 
             LARGE_INTEGER EndClock;
             QueryPerformanceCounter(&EndClock);
