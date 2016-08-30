@@ -65,7 +65,7 @@ HasBeenParsed(u64 Function,
               u32 CheckBufferSize)
 {
     for(u32 Index = 0;
-        Index < CheckBufferSize;
+        Index < CheckBufferSize+1; // NOTE(nathan): if this is 0 then it wont scan on first attempt, so plus 1
         Index++)
     {
         u64 ToCheck = *(CheckBuffer + Index);
@@ -121,15 +121,16 @@ ParseText(char *Input,
                     ValueWalker++;
                 }
                 u32 ValueLen = (u32)(ValueWalker - LocationWalker);
-                if(!HasBeenParsed((u64)Location, (u64 *)Input, ++CheckBufferSize))
+                if(!HasBeenParsed((u64)Location, (u64 *)Input, CheckBufferSize))
                 {
+                    CheckBufferSize++;
                     printf("%.*s %.*s\n", Len, Location, ValueLen, LocationWalker);
                     *((u64 *)Input + CheckBufferSize-1) = (u64)Location;
                 }
             }
         }
 
-        // memset(Input, 0, CheckBufferSize * sizeof(u64));
+        // // memset(Input, 0, CheckBufferSize * sizeof(u64));
 
         if(*C == 'g' 
             && *(C+1) == 'l')
@@ -167,8 +168,9 @@ ParseText(char *Input,
 
 
                 u32 ValueLen = (u32)(ValueWalker - LocationWalker);
-                if(!HasBeenParsed((u64)Location, (u64 *)Input, ++CheckBufferSize))
+                if(!HasBeenParsed((u64)Location, (u64 *)Input, CheckBufferSize))
                 {
+                    CheckBufferSize++;
                     printf("%.*s %.*s\n", ReturnTypeLen, ReturnTypeWalker, Len, Location);
                     *((u64 *)Input + CheckBufferSize-1) = (u64)Location;                    
                 }
@@ -181,4 +183,6 @@ ParseText(char *Input,
         }
 
     }
+
+    printf("Check buffer size: %d\n", CheckBufferSize);
 }
